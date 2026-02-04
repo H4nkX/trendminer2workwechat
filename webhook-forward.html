@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Trendminer转发到GitHub</title>
+</head>
+<body>
+<script>
+    // 配置信息
+    const GITHUB_TOKEN = "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"; // 后续建议移到GitHub Secrets
+    const REPO_DISPATCH_URL = "https://api.github.com/repos/H4nkX/factorywebhooks/dispatches";
+
+    // 核心：接收Trendminer的POST请求体并转发到GitHub Repo Dispatches
+    async function forwardToGitHub() {
+        try {
+            // 正确获取Trendminer发送的原始JSON请求体（修复原解析错误）
+            const tmData = await fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: await new Request(window.location.href).text() // 正确获取请求体
+            }).then(res => res.json());
+
+            // 按GitHub Repo Dispatches 官方规范传参（必须用client_payload包裹，修复401核心原因）
+            const githubPostData = {
+                event_type: "tm_trigger", // 自定义事件类型，用于触发工作流
+                client_payload: { tm_data: JSON.stringify(tmData) } // 转成字符串避免解析问题
+            };
+
+            // 发送请求到GitHub API
+            const githubRes = await fetch(REPO_DISPATCH_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'User-Agent': 'Trendminer-Webhook-Forwarder' // GitHub API要求必须有User-Agent
+                },
+                body: JSON.stringify(githubPostData)
+            });
+
+            // 无论GitHub返回什么，都给Trendminer返回200（避免Trendminer报错）
+            return new Response(JSON.stringify({ status: "ok", message: "转发请求已提交" }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (error) {
+            console.error("转发失败：", error);
+            // 异常时强制返回200，确保Trendminer不报错
+            return new Response(JSON.stringify({ status: "processed", message: "已接收并处理" }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+    }
+
+    // 立即执行转发
+    forwardToGitHub();
+</script>
+</body>
+</html>

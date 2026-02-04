@@ -1,0 +1,21 @@
+{
+  "webhooks": {
+    "default": {
+      "name": "默认群",
+      "url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=3dfeaca5-345e-474e-b619-ea5b10f877a8"
+    },
+    "group1": {
+      "name": "生产环境群",
+      "url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY_1"
+    },
+    "group2": {
+      "name": "测试环境群",
+      "url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY_2"
+    }
+  },
+  "default": "default",
+  "rateLimit": {
+    "windowMs": 60000,
+    "max": 50
+  }
+}
