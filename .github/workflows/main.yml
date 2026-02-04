@@ -1,0 +1,49 @@
+name: TrendMiner转发到企业微信
+
+on:
+  repository_dispatch:
+    types: [tm_trigger]
+  workflow_dispatch:
+    inputs:
+      webhook:
+        description: "目标webhook名称"
+        required: true
+        type: string
+        default: "default"
+      tm_data:
+        description: "TrendMiner数据"
+        required: true
+        type: string
+
+jobs:
+  run-forward:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 配置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm install
+
+      - name: 启动Node服务
+        run: |
+          npm start &
+          sleep 3
+
+      - name: 转发消息到Node服务
+        env:
+          WEBHOOK: ${{ github.event.client_payload.webhook || github.event.inputs.webhook }}
+          TM_DATA: ${{ github.event.client_payload.tm_data || github.event.inputs.tm_data }}
+        run: |
+          echo "目标webhook: $WEBHOOK"
+          echo "开始转发TrendMiner数据..."
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"webhook\":\"$WEBHOOK\",\"tm_data\":\"$TM_DATA\"}" \
+            http://localhost:3000/
