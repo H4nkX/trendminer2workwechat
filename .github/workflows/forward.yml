@@ -26,7 +26,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+
+      - name: 生成package-lock.json
+        run: npm install --package-lock-only
 
       - name: 安装依赖
         run: npm install
